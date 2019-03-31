@@ -13,8 +13,14 @@ class VM:
 
     def fmt(self, r):
         i, r = r
+        a, b = divmod(self.mem[self.pc])
+
         if i == self.pc:
             s = "[[%s]]" % r
+        elif i == a:
+            s = "A %d A" % a
+        elif i == B:
+            s = "B %d B" % b
         else:
             s = str(r)
         return s.ljust(8)

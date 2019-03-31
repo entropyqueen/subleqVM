@@ -15,7 +15,7 @@ class VM:
 
     def fmt(self, r):
         i, r = r
-        a, b = divmod(self.mem[self.pc], self.size)
+        a, b, c = self.decode()
 
         if i == self.pc:
             s = "[[%s]]" % r
@@ -23,39 +23,73 @@ class VM:
             s = "A %d A" % r
         elif i == b:
             s = "B %d B" % r
+        elif i == c:
+            s = "C %d C" % r
         else:
             s = str(r)
-        return s.ljust(8)
+        return s.ljust(10)
 
     def dump(self):
         print("".join(map(self.fmt, enumerate(self.mem))))
 
+    def dump_init(self):
+        print("".join("%-*d" % (10, i) for i in range(16)))
+
     def load(self, mem):
         self.mem = mem
 
-    def subleq(self, inst):
-        a, b = divmod(inst, self.size)
+    def decode(self):
+        b, c = divmod(self.mem[self.pc], self.size)
+        a, b = divmod(b, self.size)
+        return a, b, c
+
+    def subleq(self):
+        a, b, c = self.decode()
         assert -self.size < a < self.size, "Segmentation fault."
+
         aa = self.mem[a]
         bb = self.mem[b]
-        if self.debug:
-            print(dict(mem=self.mem[a], aa=aa, bb=bb, sub=aa-bb, nxt=(aa-bb)%16 if aa - bb <= 0 else self.pc + 1))
+
         self.mem[a] = aa - bb
-        if self.mem[a] <= 0:
-            return self.mem[a]
-        return self.pc + 1
+        self.pc = (c if self.mem[a] <= 0 else self.pc + 1) % self.size
+
+        if self.debug:
+            print(dict(aa=aa, bb=bb, sub=aa-bb, nxt=pc))
 
     def tick(self):
-        self.pc = self.subleq(self.mem[self.pc]) % self.size
+        self.subleq()
         if self.speed:
             sleep(self.speed)
+
+def s(a, b, c):
+    return a * 16**2 + b * 16 + c
 
 if __name__ == '__main__':
 
     if len(sys.argv) > 1:
         random.seed(int(sys.argv[1]))
     vm = VM(16, speed=0.1)
-    vm.load([random.randrange(0, vm.size**2) for _ in range(vm.size)])
+    #    vm.load([random.randrange(0, vm.size**3) for _ in range(vm.size)])
+    prog = [
+            s(11, 13, 1),
+            s(12, 11, 2),
+            s(0, 0, 3),
+            s(0, 14, 4),
+
+            s(15, 0, 5),
+            s(12, 10, 7),
+            s(9, 9, 4),
+            s(0, 0, 0),
+
+            0, 0, 0, 0,
+            0, 0, 0, 0,
+    ]
+    prog[10] = 1
+    prog[13] = random.randrange(0, 10)
+    prog[14] = random.randrange(0, 10)
+
+    vm.load(prog)
+    vm.dump_init()
     while True:
         vm.dump()
         try:

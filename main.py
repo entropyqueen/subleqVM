@@ -66,29 +66,32 @@ def s(a, b, c):
 
 if __name__ == '__main__':
 
+    vm = VM(16, speed=0.1)
     if len(sys.argv) > 1:
         random.seed(int(sys.argv[1]))
-    vm = VM(16, speed=0.1)
-    #    vm.load([random.randrange(0, vm.size**3) for _ in range(vm.size)])
-    prog = [
-            s(11, 13, 1),
-            s(12, 11, 2),
-            s(0, 0, 3),
-            s(0, 14, 4),
+        vm.load([random.randrange(0, vm.size**3) for _ in range(vm.size)])
+    else:
+        prog = [
+                s(11, 13, 1),
+                s(12, 11, 2),
+                s(0, 0, 3),
+                s(0, 14, 4),
 
-            s(15, 0, 5),
-            s(12, 10, 7),
-            s(9, 9, 4),
-            s(0, 0, 0),
+                s(15, 0, 5),
+                s(12, 10, 7),
+                s(9, 9, 4),
+                s(0, 0, 0),
 
-            0, 0, 0, 0,
-            0, 0, 0, 0,
-    ]
-    prog[10] = 1
-    prog[13] = random.randrange(0, 10)
-    prog[14] = random.randrange(0, 10)
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+        ]
+        prog[10] = 1
+        prog[13] = random.randrange(-10, 10)
+        prog[14] = random.randrange(-10, 10)
 
-    vm.load(prog)
+        vm.load(prog)
+
+
     vm.dump_init()
     while True:
         vm.dump()

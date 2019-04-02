@@ -8,24 +8,33 @@ OISC (One Instruction Set Computer) VM using subleq (SUbstract and Branch if Les
 This is the virtual machine, it takes a program as parameter or a seed with `-s` to execute random program.
 
 ```
-usage: vm.py [-h] [--seed SEED] [--memsz SIZE] [--verbose] [FILE]
+usage: vm.py [-h] [--seed SEED] [--memsz SIZE] [--speed SPEED] [--verbose]
+             [--dump-fmt DUMP_FMT]
+             [FILE]
 
 OISC VM implementation using subleq instructions.
 
 positional arguments:
-  FILE                  bytecode to load (compiled with asm.py)
+  FILE                  Bytecode to load (compiled with asm.py)
 
 optional arguments:
   -h, --help            show this help message and exit
-  --seed SEED, -s SEED  seed for loading random program
+  --seed SEED, -S SEED  Seed for loading random program
   --memsz SIZE, -m SIZE
-                        change the virtual memory size (default is 16)
-  --verbose, -v         be verbose
+                        Change the virtual memory size (default is 16)
+  --speed SPEED, -s SPEED
+                        VM speed (this goes into a sleep, so 0 => fast
+  --verbose, -v         Enable verbose messages
+  --dump-fmt DUMP_FMT, -d DUMP_FMT
+                        List of registers to dump when -v is present exemple:
+                        13,14,15
 ```
 
 #### syscall
-##### Write
-The VM will print the last memory word if it is > 0.
+1. Write
+  * The VM will print the last memory word if it is > 0.
+2. read
+  * still not implemented
 
 ### ASM
 

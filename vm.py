@@ -14,7 +14,7 @@ class VM:
     def __init__(self, size, speed=None, verbose=False):
         self.size = size
         self.pc = 0
-        self.mem = [0] * size
+        self.mem = [0] * self.size
         self.speed = speed
         self.debug = False
         self.verbose = verbose
@@ -64,7 +64,9 @@ class VM:
         self.mem = [random.randrange(0, vm.size**3) for _ in range(self.size)]
 
     def load(self, mem):
-        self.mem = mem
+        assert len(mem) <= self.size, "Memory error (VM does not have enough memory)."
+        for i, d in enumerate(mem):
+            self.mem[i] = d
 
     ##
     ## Implementation
@@ -73,11 +75,13 @@ class VM:
     def decode(self):
         b, c = divmod(self.mem[self.pc], self.size)
         a, b = divmod(b, self.size)
+        if self.debug:
+            print('Decoding instruction: %r' % dict(a=a, b=b, c=c))
         return a, b, c
 
     def subleq(self):
         a, b, c = self.decode()
-        assert -self.size < a < self.size, "Segmentation fault."
+        assert -self.size < a < self.size and -self.size < b < self.size, "Segmentation fault."
 
         aa = self.mem[a]
         bb = self.mem[b]
@@ -86,7 +90,7 @@ class VM:
         self.pc = (c if self.mem[a] <= 0 else self.pc + 1) % self.size
 
         if self.debug:
-            print(dict(aa=aa, bb=bb, sub=aa-bb, nxt=pc))
+            print(dict(aa=aa, bb=bb, sub=aa-bb, nxt=self.pc))
 
     def tick(self):
         self.subleq()
@@ -101,16 +105,22 @@ if __name__ == '__main__':
             help='bytecode to load (compiled with asm.py)')
     grp.add_argument('--seed', '-s', metavar='SEED', default=None,
             help='seed for loading random program')
+    parser.add_argument('--memsz', '-m', metavar='SIZE', default=16, type=int,
+            help='change the virtual memory size (default is 16)')
     parser.add_argument('--verbose', '-v', action='store_const', default=False, const=True,
             help='be verbose')
     args = parser.parse_args()
 
-    vm = VM(16, speed=0.1, verbose=args.verbose)
+    vm = VM(args.memsz, speed=0.1, verbose=args.verbose)
 
     # Load a program (either from file or random)
     if args.file != None:
         prog = vm.prog_parse_from_file(args.file)
-        vm.load(prog)
+        try:
+            vm.load(prog)
+        except AssertionError as e:
+            print(e)
+            exit()
     else:
         random.seed(args.seed)
         vm.random_load()

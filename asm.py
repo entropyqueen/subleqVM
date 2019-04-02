@@ -5,17 +5,21 @@ import pickle
 
 import random
 
+memsz = 16
+
 # pack values to fit in a word
 def pack(*v):
     w = 0
     for i,x in enumerate(v):
-        w += 16**(len(v) - i - 1) * x
+        w += memsz**(len(v) - i - 1) * x
     return w
 
 if __name__ == '__main__':
 
-    if len(sys.argv) != 2:
-        print('Usage: %s <file.s>')
+    if len(sys.argv) != 3:
+        print('Usage: %s <MEMSZ> <file.s>')
+
+    memsz = int(sys.argv[1])
 
     prog = [
         pack(11, 13, 1),
@@ -35,5 +39,5 @@ if __name__ == '__main__':
     prog[13] = random.randrange(0, 10)
     prog[14] = random.randrange(0, 10)
 
-    with open(sys.argv[1], 'wb') as f:
+    with open(sys.argv[2], 'wb') as f:
         pickle.dump(prog, f)

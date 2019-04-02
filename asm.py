@@ -5,21 +5,23 @@ import pickle
 
 import random
 
-memsz = 16
+MEMSZ = 16
 
-# pack values to fit in a word
+
 def pack(*v):
+    """Packs value to fit into a word"""
     w = 0
-    for i,x in enumerate(v):
-        w += memsz**(len(v) - i - 1) * x
+    for i, x in enumerate(v):
+        w += MEMSZ**(len(v) - i - 1) * x
     return w
+
 
 if __name__ == '__main__':
 
     if len(sys.argv) != 3:
         print('Usage: %s <MEMSZ> <file.s>')
 
-    memsz = int(sys.argv[1])
+    MEMSZ = int(sys.argv[1])
 
     prog = [
         pack(11, 13, 1),

@@ -8,12 +8,13 @@ import pickle
 
 class VM:
 
-    def __init__(self, size, speed=None):
+    def __init__(self, size, speed=None, verbose=False):
         self.size = size
         self.pc = 0
         self.mem = [0] * size
         self.speed = speed
         self.debug = False
+        self.verbose = verbose
 
     ##
     ## Debugging utilities
@@ -36,10 +37,12 @@ class VM:
         return s.ljust(10)
 
     def dump(self):
-        print("".join(map(self.fmt, enumerate(self.mem))))
+        if self.verbose:
+            print("".join(map(self.fmt, enumerate(self.mem))))
 
     def dump_init(self):
-        print("".join("%-*d" % (10, i) for i in range(16)))
+        if self.verbose:
+            print("".join("%-*d" % (10, i) for i in range(16)))
 
     ##
     ## Program loader utilities
@@ -89,16 +92,17 @@ if __name__ == '__main__':
     grp = parser.add_mutually_exclusive_group(required=True)
     grp.add_argument('file', metavar='FILE', nargs='?', default=None,
             help='bytecode to load (compiled with asm.py)')
-    grp.add_argument('--seed', '-s', metavar='S', default=None,
+    grp.add_argument('--seed', '-s', metavar='SEED', default=None,
             help='seed for loading random program')
+    parser.add_argument('--verbose', '-v', action='store_const', default=False, const=True,
+            help='be verbose')
     args = parser.parse_args()
 
-    vm = VM(16, speed=0.1)
+    vm = VM(16, speed=0.1, verbose=args.verbose)
 
     # Load a program (either from file or random)
     if args.file != None:
         prog = vm.prog_parse_from_file(args.file)
-        print("%r" % prog)
         vm.load(prog)
     else:
         random.seed(args.seed)

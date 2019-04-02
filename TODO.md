@@ -11,5 +11,4 @@
 
 ## Enhancement
 
-1. add verbose option that will trigger dump()
 2. find a better bytecode format?

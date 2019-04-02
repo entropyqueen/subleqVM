@@ -67,8 +67,9 @@ class VM:
         self.mem = [random.randrange(0, vm.size**3) for _ in range(self.size)]
 
     def load(self, mem):
-        assert len(mem) <= self.size, \
+        assert len(mem) <= self.size, (
             "Memory error (VM does not have enough memory)."
+        )
         for i, d in enumerate(mem):
             self.mem[i] = d
 
@@ -85,8 +86,9 @@ class VM:
 
     def subleq(self):
         a, b, c = self.decode()
-        assert -self.size < a < self.size and -self.size < b < self.size, \
+        assert -self.size < a < self.size and -self.size < b < self.size, (
             "Segmentation fault."
+        )
 
         aa = self.mem[a]
         bb = self.mem[b]

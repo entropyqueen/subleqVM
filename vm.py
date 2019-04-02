@@ -49,7 +49,7 @@ class VM:
 
     def dump_init(self):
         if self.verbose:
-            print("".join("%-*d" % (self.DISPLAY_SPACING, i) for i in range(16)))
+            print("".join("%-*d" % (self.DISPLAY_SPACING, i) for i in range(self.size)))
 
     ##
     ## Program loader utilities
@@ -61,7 +61,7 @@ class VM:
         return x
 
     def random_load(self):
-        self.mem = [random.randrange(0, vm.size**3) for _ in range(vm.size)]
+        self.mem = [random.randrange(0, vm.size**3) for _ in range(self.size)]
 
     def load(self, mem):
         self.mem = mem

@@ -12,6 +12,7 @@ from time import sleep
 class VM:
 
     DISPLAY_SPACING = 10
+    INST_SZ         = 16
 
     def __init__(self, size, speed=None, verbose=False):
         self.size = size
@@ -19,6 +20,11 @@ class VM:
         self.mem = [0] * self.size
         self.speed = speed
         self.is_halted = False
+
+        # Sizeof system reserved registers at end of memory
+        self.sys_len = 1
+
+        # display
         self.debug = False
         self.verbose = verbose
 
@@ -54,7 +60,7 @@ class VM:
         if self.verbose:
             print("".join("%-*d" % (
                 self.DISPLAY_SPACING, i
-                ) for i in range(self.size)))
+            ) for i in range(self.size)))
 
     #
     # Program loader utilities
@@ -68,20 +74,42 @@ class VM:
     def random_load(self):
         self.mem = [random.randrange(0, vm.size**3) for _ in range(self.size)]
 
-    def load(self, mem):
-        assert len(mem) <= self.size, (
-            "Memory error (VM does not have enough memory)."
+    def load(self, prog):
+        assert type(prog) == dict, "Program format invalid."
+        assert '.text' in prog.keys(), (
+                "Program does not contain .text section."
         )
-        for i, d in enumerate(mem):
+
+        prog_size = len(prog['.text']) + self.sys_len
+        if '.data' in prog.keys():
+            data_len = sum(map(len, prog['.data']))
+            prog_size += data_len
+        if 'stack' in prog.keys():
+            prog_size += prog['stack']
+        assert prog_size <= self.size, (
+                "Not enough memory to load this program "
+                "(at least %s words required)." % prog_size
+        )
+
+        # LOAD .text to memory.
+        for i, d in enumerate(prog['.text']):
             self.mem[i] = d
+
+        if '.data' in prog.keys():
+            for data in prog['.data']:
+                assert type(data) == type(b''), (
+                        "Format error in .data section (should be bytes)"
+                )
+            for i, d in enumerate(b''.join(prog['.data'])):
+                self.mem[self.size - data_len - self.sys_len + i] = d
 
     #
     # Implementation
     #
 
     def decode(self):
-        b, c = divmod(self.mem[self.pc], self.size)
-        a, b = divmod(b, self.size)
+        b, c = divmod(self.mem[self.pc], self.INST_SZ)
+        a, b = divmod(b, self.INST_SZ)
         if self.debug:
             print('Decoding instruction: %r' % dict(a=a, b=b, c=c))
         return a, b, c
@@ -122,6 +150,7 @@ class VM:
             self.dump()
             self.tick()
 
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
@@ -158,4 +187,3 @@ if __name__ == '__main__':
         print('Halted.')
     except AssertionError as e:
         print(e)
-

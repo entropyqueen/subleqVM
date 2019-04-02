@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 
-from time import sleep
 import random
 import argparse
-
 import pickle
 
+from termcolor import colored
+from time import sleep
+
 class VM:
+
+    DISPLAY_SPACING = 10
 
     def __init__(self, size, speed=None, verbose=False):
         self.size = size
@@ -24,17 +27,21 @@ class VM:
         i, r = r
         a, b, c = self.decode()
 
-        if i == self.pc:
-            s = "[[%s]]" % r
-        elif i == a:
-            s = "A %d A" % r
-        elif i == b:
-            s = "B %d B" % r
-        elif i == c:
-            s = "C %d C" % r
+        if i == self.pc or i == a or i == b or i == c:
+            s = str(r).ljust(self.DISPLAY_SPACING - 3)
         else:
-            s = str(r)
-        return s.ljust(10)
+            s = str(r).ljust(self.DISPLAY_SPACING)
+
+        if i == self.pc:
+            s = colored("PC:%s" % s, 'green')
+        elif i == a:
+            s = colored("A: %s" % s, 'red')
+        elif i == b:
+            s = colored("B: %s" % s, 'yellow')
+        elif i == c:
+            s = colored("C: %s" % s, 'cyan')
+
+        return s
 
     def dump(self):
         if self.verbose:
@@ -42,7 +49,7 @@ class VM:
 
     def dump_init(self):
         if self.verbose:
-            print("".join("%-*d" % (10, i) for i in range(16)))
+            print("".join("%-*d" % (self.DISPLAY_SPACING, i) for i in range(16)))
 
     ##
     ## Program loader utilities

@@ -1,0 +1,27 @@
+Program layout:
+
+at exec time:
+
+	0x0										   0xsize
+ 	| .text   | GAP | stack | GAP | .data  |SYS|
+	¦_________|_____|_______|_____|________|___|
+	 <------------------size------------------>
+
+SYS: system reserved memory (curently contains the Write Register (WR)
+
+program file:
+	prog = {
+		".text": [opcode, opcode, ..., ],
+		".data": ["Hello world!\n", "str2"],
+		"stack": 32,
+		"prog_size": len(.text) + len(.data) + stack,
+	}
+
+assert (sum(map(len, .data)) + stack) < size - len(.text), (
+	"Not enough memory."
+)
+
+.text is loaded at @0x00
+.data is loaded at @size - len(sys) - sum(map(len, .data))
+stack is loaded at @.data - (sizeof(GAP_MIN) + stack)
+

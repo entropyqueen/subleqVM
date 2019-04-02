@@ -23,6 +23,10 @@ optional arguments:
   --verbose, -v         be verbose
 ```
 
+#### syscall
+##### Write
+The VM will print the last memory word if it is > 0.
+
 ### ASM
 
 The ASM is here to help the creation of a program file, still work in progress.

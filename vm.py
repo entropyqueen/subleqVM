@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 import random
 import argparse
 import pickle
@@ -17,6 +18,7 @@ class VM:
         self.pc = 0
         self.mem = [0] * self.size
         self.speed = speed
+        self.is_halted = False
         self.debug = False
         self.verbose = verbose
 
@@ -101,9 +103,24 @@ class VM:
 
     def tick(self):
         self.subleq()
+
+        # Syscall write
+        # Display the last memory word as ascii value ( % 127)
+        # if value > 0
+        if self.mem[-1] > 0:
+            print('%s' % chr(self.mem[-1] % 127), end='')
+            sys.stdout.flush()
+
+        if self.pc == 0 and self.mem[0] == 0:
+            self.is_halted = True
+
         if self.speed:
             sleep(self.speed)
 
+    def run(self):
+        while not self.is_halted:
+            self.dump()
+            self.tick()
 
 if __name__ == '__main__':
 
@@ -136,10 +153,9 @@ if __name__ == '__main__':
 
     # Init display and run.
     vm.dump_init()
-    while True:
-        vm.dump()
-        try:
-            vm.tick()
-        except AssertionError as e:
-            print(e)
-            break
+    try:
+        vm.run()
+        print('\nHalted.')
+    except AssertionError as e:
+        print(e)
+

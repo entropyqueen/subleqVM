@@ -155,7 +155,7 @@ if __name__ == '__main__':
     vm.dump_init()
     try:
         vm.run()
-        print('\nHalted.')
+        print('Halted.')
     except AssertionError as e:
         print(e)
 

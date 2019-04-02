@@ -6,9 +6,13 @@
 	* same thing for read
 	* we can also have control registers for thoses? ==> allowing for blocking reads and controled output
 
+2. 
 
 ## Debug
 
 ## Enhancement
 
-2. find a better bytecode format?
+1. find a better bytecode format?
+	* load sections at specific address space? (.text .data .bss ...)
+
+2. 

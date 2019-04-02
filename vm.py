@@ -12,9 +12,9 @@ from time import sleep
 class VM:
 
     DISPLAY_SPACING = 10
-    INST_SZ         = 16
+    INST_SZ = 128
 
-    def __init__(self, size, speed=None, verbose=False):
+    def __init__(self, size, speed=None, verbose=False, dmp_fmt=None):
         self.size = size
         self.pc = 0
         self.mem = [0] * self.size
@@ -27,6 +27,7 @@ class VM:
         # display
         self.debug = False
         self.verbose = verbose
+        self.dmp_fmt = dmp_fmt
 
     #
     # Debugging utilities
@@ -36,6 +37,9 @@ class VM:
         i, r = r
         a, b, c = self.decode()
 
+        if self.dmp_fmt is not None:
+            if i not in self.dmp_fmt:
+                return ''
         if i == self.pc or i == a or i == b or i == c:
             s = str(r).ljust(self.DISPLAY_SPACING - 3)
         else:
@@ -60,7 +64,10 @@ class VM:
         if self.verbose:
             print("".join("%-*d" % (
                 self.DISPLAY_SPACING, i
-            ) for i in range(self.size)))
+            ) for i in range(self.size) if (
+                    self.dmp_fmt is not None and i in self.dmp_fmt
+                )
+            ))
 
     #
     # Program loader utilities
@@ -97,7 +104,7 @@ class VM:
 
         if '.data' in prog.keys():
             for data in prog['.data']:
-                assert type(data) == type(b''), (
+                assert isinstance(data, bytes), (
                         "Format error in .data section (should be bytes)"
                 )
             for i, d in enumerate(b''.join(prog['.data'])):
@@ -151,22 +158,49 @@ class VM:
             self.tick()
 
 
+def parse_dump_fmt(s):
+    if s is None:
+        return None
+    for x in s:
+        assert x in '0123456789,', "Bad format string."
+    return [int(x) for x in s.split(',')]
+
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
             description='OISC VM implementation using subleq instructions.')
     grp = parser.add_mutually_exclusive_group(required=True)
     grp.add_argument('file', metavar='FILE', nargs='?', default=None,
-                     help='bytecode to load (compiled with asm.py)')
-    grp.add_argument('--seed', '-s', metavar='SEED', default=None,
-                     help='seed for loading random program')
+                     help='Bytecode to load (compiled with asm.py)')
+    grp.add_argument('--seed', '-S', metavar='SEED', default=None,
+                     help='Seed for loading random program')
     parser.add_argument('--memsz', '-m', metavar='SIZE', default=16, type=int,
-                        help='change the virtual memory size (default is 16)')
-    parser.add_argument('--verbose', '-v', action='store_const', default=False,
-                        const=True, help='be verbose')
+                        help='Change the virtual memory size (default is 16)')
+    parser.add_argument(
+            '--speed', '-s', type=float, default=0,
+            help='VM speed (this goes into a sleep, so 0 => fast'
+    )
+    parser.add_argument(
+            '--verbose', '-v', action='store_const', default=False,
+            required='-d' in sys.argv or '--dump-fmt' in sys.argv,
+            const=True, help='Enable verbose messages')
+    parser.add_argument(
+            '--dump-fmt', '-d', type=str, default=None,
+            help='List of registers to dump when -v is present\n'
+            'exemple: 13,14,15'
+    )
     args = parser.parse_args()
 
-    vm = VM(args.memsz, speed=0.1, verbose=args.verbose)
+    dmp_fmt = None
+    try:
+        dmp_fmt = parse_dump_fmt(args.dump_fmt)
+    except AssertionError as e:
+        print(e)
+        exit()
+
+    vm = VM(args.memsz, speed=args.speed,
+            verbose=args.verbose, dmp_fmt=dmp_fmt)
 
     # Load a program (either from file or random)
     if args.file is not None:

@@ -5,7 +5,7 @@ import pickle
 
 import random
 
-INST_SZ = 16
+INST_SZ = 128
 
 
 def pack(*v):

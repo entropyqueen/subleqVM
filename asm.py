@@ -5,7 +5,8 @@ import pickle
 
 import random
 
-def s(*v):
+# pack values to fit in a word
+def pack(*v):
     w = 0
     for i,x in enumerate(v):
         w += 16**(len(v) - i - 1) * x
@@ -17,15 +18,15 @@ if __name__ == '__main__':
         print('Usage: %s <file.s>')
 
     prog = [
-        s(11, 13, 1),
-        s(12, 11, 2),
-        s(0, 0, 3),
-        s(0, 14, 4),
+        pack(11, 13, 1),
+        pack(12, 11, 2),
+        pack(0, 0, 3),
+        pack(0, 14, 4),
 
-        s(15, 0, 5),
-        s(12, 10, 7),
-        s(9, 9, 4),
-        s(0, 0, 0),
+        pack(15, 0, 5),
+        pack(12, 10, 7),
+        pack(9, 9, 4),
+        pack(0, 0, 0),
 
         0, 0, 0, 0,
         0, 0, 0, 0,

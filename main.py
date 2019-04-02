@@ -2,7 +2,9 @@
 
 from time import sleep
 import random
-import sys
+import argparse
+
+import pickle
 
 class VM:
 
@@ -12,6 +14,10 @@ class VM:
         self.mem = [0] * size
         self.speed = speed
         self.debug = False
+
+    ##
+    ## Debugging utilities
+    ##
 
     def fmt(self, r):
         i, r = r
@@ -35,8 +41,24 @@ class VM:
     def dump_init(self):
         print("".join("%-*d" % (10, i) for i in range(16)))
 
+    ##
+    ## Program loader utilities
+    ##
+
+    def prog_parse_from_file(self, f_name):
+        with open(f_name, 'rb') as f:
+            x = pickle.load(f)
+        return x
+
+    def random_load(self):
+        self.mem = [random.randrange(0, vm.size**3) for _ in range(vm.size)]
+
     def load(self, mem):
         self.mem = mem
+
+    ##
+    ## Implementation
+    ##
 
     def decode(self):
         b, c = divmod(self.mem[self.pc], self.size)
@@ -61,37 +83,28 @@ class VM:
         if self.speed:
             sleep(self.speed)
 
-def s(a, b, c):
-    return a * 16**2 + b * 16 + c
-
 if __name__ == '__main__':
 
+    parser = argparse.ArgumentParser(description='OISC VM implementation using subleq instructions.')
+    grp = parser.add_mutually_exclusive_group(required=True)
+    grp.add_argument('file', metavar='FILE', nargs='?', default=None,
+            help='bytecode to load (compiled with asm.py)')
+    grp.add_argument('--seed', '-s', metavar='S', default=None,
+            help='seed for loading random program')
+    args = parser.parse_args()
+
     vm = VM(16, speed=0.1)
-    if len(sys.argv) > 1:
-        random.seed(int(sys.argv[1]))
-        vm.load([random.randrange(0, vm.size**3) for _ in range(vm.size)])
-    else:
-        prog = [
-                s(11, 13, 1),
-                s(12, 11, 2),
-                s(0, 0, 3),
-                s(0, 14, 4),
 
-                s(15, 0, 5),
-                s(12, 10, 7),
-                s(9, 9, 4),
-                s(0, 0, 0),
-
-                0, 0, 0, 0,
-                0, 0, 0, 0,
-        ]
-        prog[10] = 1
-        prog[13] = random.randrange(-10, 10)
-        prog[14] = random.randrange(-10, 10)
-
+    # Load a program (either from file or random)
+    if args.file != None:
+        prog = vm.prog_parse_from_file(args.file)
+        print("%r" % prog)
         vm.load(prog)
+    else:
+        random.seed(args.seed)
+        vm.random_load()
 
-
+    # Init display and run.
     vm.dump_init()
     while True:
         vm.dump()

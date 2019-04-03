@@ -1,27 +1,62 @@
-Program layout:
+BINARY FILE FORMAT DOCUMENTATION
 
-at exec time:
+========================================
 
-	0x0										   0xsize
- 	| .text   | GAP | stack | GAP | .data  |SYS|
-	¦_________|_____|_______|_____|________|___|
-	 <------------------size------------------>
+ASM:
 
-SYS: system reserved memory (curently contains the Write Register (WR)
+The asm will compile an assembly file and convert it to a binary readable by subleqVM
 
-program file:
+Program file:
+
 	prog = {
 		".text": [opcode, opcode, ..., ],
 		".data": ["Hello world!\n", "str2"],
-		"stack": 32,
+		"mem": 32,
 		"prog_size": len(.text) + len(.data) + stack,
+		"inst_size": 128,
 	}
 
-assert (sum(map(len, .data)) + stack) < size - len(.text), (
-	"Not enough memory."
-)
+Program file contains a pickle() object of the above json.
 
-.text is loaded at @0x00
-.data is loaded at @size - len(sys) - sum(map(len, .data))
-stack is loaded at @.data - (sizeof(GAP_MIN) + stack)
+User controled:
+	.text: list of opcodes ; each opcode represents the 3 operands of the subleq instruction, packed.
+	.data: bytearray ; data to be loaded in memory
+	mem: int ; minimal memory required by the program
+
+Compiler controlled:
+	prog_size: int ; size of loaded program: sizeof(.text) + sizeof(.data) + mem + gaps
+	inst_size: int ; equivalent to architecture nb of bits (32, 64...) except it is the result 2**bits
+
+=======================================
+
+LOADER:
+
+The loader takes a program and loads it in memory so the VM can exec it.
+
+prog at exec time:
+
+	0x0									0xsize
+ 	|SYS|.text   | | .data | |  mem      |
+	¦___|________|_|_______|_|___________|
+	 <--------------size---------------->
+
+assert prog_size <= mem_size, "Memory Error: not enough memory"
+
+<SYS>:
+	0x00: HALT (if set to 0)
+	[0x01, 0x0f]: unused
+	[0x10, 0x1f]: General registers, noted from r0 to rf.
+	[0x20, 0x2f]: SYScall utilites
+				  - 0x21: WR: if the value written in this word is > 0, it will be printed at next tick on stdout.
+				  - 0x22: RD: this will be used for allowing reading from stdin, NOT IMPLEM YET
+				  - 0x23: RND: provides a different value, randomized at each tick, NOT IMPLEM YET
+				  - 0x24 to 0x2f: unused.
+
+Prog:
+	[0x30, SIZE]:
+		.text 	is loaded at @0x30
+		.data	is loaded at @0x30 + sizeof(.text) + GAP
+		mem 	is loaded at @.data + sizeof(.data) + GAP
+
+		GAP is arbitrary and does deserve any purpose yet.
 

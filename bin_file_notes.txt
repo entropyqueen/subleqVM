@@ -58,5 +58,5 @@ Prog:
 		.data	is loaded at @0x30 + sizeof(.text) + GAP
 		mem 	is loaded at @.data + sizeof(.data) + GAP
 
-		GAP is arbitrary and does deserve any purpose yet.
+		GAP is arbitrary and does not serve any purpose yet.
 

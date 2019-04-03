@@ -1,6 +1,11 @@
 # TODO
 
 ## Features
+
+0. LOADER:
+	* load properly, following spec in bin_file_notes.txt
+	* Allow to pass parameters to the program in its registers (r0 to re)
+
 1. Add some syscalls -> write / read
 	* add a register which will be populated with stdin ?
 	* we can also have control registers for thoses? ==> allowing for blocking reads and controled output

@@ -10,12 +10,13 @@ This is the virtual machine, it takes a program as parameter or a seed with `-s`
 ```
 usage: vm.py [-h] [--seed SEED] [--memsz SIZE] [--speed SPEED] [--verbose]
              [--dump-fmt DUMP_FMT]
-             [FILE]
+             [FILE] [ARG [ARG ...]]
 
 OISC VM implementation using subleq instructions.
 
 positional arguments:
   FILE                  Bytecode to load (compiled with asm.py)
+  ARG                   Arguments that will be passed to the program
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -29,6 +30,29 @@ optional arguments:
                         List of registers to dump when -v is present exemple:
                         13,14,15
 ```
+
+Test run wiht prog.bin:
+```
+$ python vm.py -m 128 -v -d 16,17,31,70 asm/bin/prog.bin 4 5
+16        17        31        70        
+B: 4      5         0         1         
+4         5         0         1         
+4         B: 5      0         1         
+4         5         A: 0      1         
+4         5         5         B: 1      
+4         5         5         1         
+4         5         A: 5      1         
+4         5         10        B: 1      
+4         5         10        1         
+4         5         A: 10     1         
+4         5         15        B: 1      
+4         5         15        1         
+4         5         A: 15     1         
+4         5         20        B: 1      
+Halted.
+```
+The program takes input from r0 (addr 16) and r1 (addr 17) and multiply them, then store the result in rf (addr 31).
+It also uses a static data from the `.data` section (addr 70), containing the value `1`.
 
 #### syscall
 1. Write

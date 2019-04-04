@@ -41,24 +41,27 @@ class VM:
         i, r = r
         a, b, c = self.decode()
 
-        if self.dmp_fmt is not None:
-            if i not in self.dmp_fmt:
-                return ''
-        if i == self.pc or i == a or i == b or i == c:
-            s = str(r).ljust(self.DISPLAY_SPACING - 3)
-        else:
-            s = str(r).ljust(self.DISPLAY_SPACING)
+        if self.dmp_fmt is not None and i not in self.dmp_fmt:
+            return ''
 
-        if i == self.pc:
-            s = colored("PC:%s" % s, 'green')
-        elif i == a:
-            s = colored("A: %s" % s, 'red')
-        elif i == b:
-            s = colored("B: %s" % s, 'yellow')
-        elif i == c:
-            s = colored("C: %s" % s, 'cyan')
+        label_color_for_i = {
+            self.pc: ('PC', 'green'),
+            a: ('A', 'red'),
+            b: ('B', 'yellow'),
+            c: ('C', 'cyan'),
+        }
 
-        return s
+        try:
+            label, color = label_color_for_i[i]
+        except KeyError:
+            text = "%d" % self.mem[i]
+            return text.ljust(self.DISPLAY_SPACING)
+
+        text = "%d [%s]" % (self.mem[i], label)
+        text = text.ljust(self.DISPLAY_SPACING)
+
+        return colored(text, color)
+
 
     def dump(self):
         if self.verbose:

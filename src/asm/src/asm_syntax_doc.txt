@@ -1,0 +1,31 @@
+ASM SYNTAX DOCUMENTATION
+========================
+
+SECTIONS:
+
+A section is defined by the keyword 'section' and a name:
+
+```
+ section test
+```
+
+There are only one mandatory section which is '.text'
+
+.text contains the executable code.
+.data contains program data that will be loaded after the .text section.
+mem is just a section containing a value of the minimal memory required by the program.
+
+A section ends where another starts, or if we reach EOF.
+
+========================
+
+LABELS:
+
+A label references a value, it is a name followed by '=', that can be followed by a value
+
+```
+	test=42
+	test2=
+```
+
+Those are both valid. However, if no value is specified the value will be init to 0.

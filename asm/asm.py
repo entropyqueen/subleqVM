@@ -32,16 +32,17 @@ if __name__ == '__main__':
     data_one = data
 
     prog['.text'] = [
-        pack(0x12, 0x10, 1),        # r2 -= r0
-        pack(0x13, 0x12, 2),        # r3 -= r2
-        pack(0x14, 0x11, 3),        # r4 -= r1
+        pack(0x12, 0x10, 0x31),        # r2 -= r0
+        pack(0x13, 0x12, 0x32),        # r3 -= r2
+        pack(0x14, 0x11, 0x33),        # r4 -= r1
 
-        pack(0x1f, 0x14, 4),        # rf -= r4 == rf += r1
-        pack(0x13, data_one, 0),    # r3 -= data['one'] ; if r3 - 1 == 0 : jmp 0 // == halt
-        pack(0, 0, 3),              # jmp @3
+        pack(0x1f, 0x14, 0x34),        # rf -= r4 == rf += r1
+        pack(0x13, data_one, 0x00),    # r3 -= data['one'] ; if r3 - 1 == 0 : jmp 0 // == halt
+        pack(0, 0, 0x33),              # jmp @3
     ]
 
-    prog['.data'] = [b'\x01']
+    prog['.data'] = bytearray(1)
+    prog['.data'][0] = 1
     prog['mem'] = 0
 
     prog['inst_sz'] = INST_SZ

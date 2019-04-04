@@ -11,8 +11,15 @@ from time import sleep
 
 class VM:
 
-    DISPLAY_SPACING = 10
     INST_SZ = 128
+
+    SYS_SZ  = 0x30
+    REGS_START  = 0x10
+    REGS_END    = 0x1f
+
+    MEM_GAP = 0x10
+
+    DISPLAY_SPACING = 10
 
     def __init__(self, size, speed=None, verbose=False, dmp_fmt=None):
         self.size = size
@@ -20,9 +27,6 @@ class VM:
         self.mem = [0] * self.size
         self.speed = speed
         self.is_halted = False
-
-        # Sizeof system reserved registers at end of memory
-        self.sys_len = 1
 
         # display
         self.debug = False
@@ -81,34 +85,54 @@ class VM:
     def random_load(self):
         self.mem = [random.randrange(0, vm.size**3) for _ in range(self.size)]
 
-    def load(self, prog):
+    def load(self, prog, params):
         assert type(prog) == dict, "Program format invalid."
         assert '.text' in prog.keys(), (
                 "Program does not contain .text section."
         )
 
-        prog_size = len(prog['.text']) + self.sys_len
+        prog_size = self.SYS_SZ + len(prog['.text'])
         if '.data' in prog.keys():
-            data_len = sum(map(len, prog['.data']))
-            prog_size += data_len
+                   prog_size += len(prog['.data'])
         if 'stack' in prog.keys():
             prog_size += prog['stack']
+
         assert prog_size <= self.size, (
                 "Not enough memory to load this program "
                 "(at least %s words required)." % prog_size
         )
 
         # LOAD .text to memory.
+        # start @ 0x30 (sys is before that)
+        base_text = self.SYS_SZ
         for i, d in enumerate(prog['.text']):
-            self.mem[i] = d
+            self.mem[base_text + i] = d
 
+        # LOAD .data after .text
+        # (also add GAP because why not.
+        base_data = base_text + len(prog['.text']) + self.MEM_GAP
         if '.data' in prog.keys():
-            for data in prog['.data']:
-                assert isinstance(data, bytes), (
-                        "Format error in .data section (should be bytes)"
-                )
-            for i, d in enumerate(b''.join(prog['.data'])):
-                self.mem[self.size - data_len - self.sys_len + i] = d
+            for i, d in enumerate(prog['.data']):
+                self.mem[base_data + i] = d
+
+        # mem starts @ base_data + len(prog['.data']) + MEM_GAP
+
+        # if inst_size in program header, use it:
+        if 'inst_sz' in prog.keys():
+            assert isinstance(prog['inst_sz'], int), (
+                    "Invalid INST_SZ in program header."
+            )
+            self.INST_SZ = prog['inst_sz']
+
+        # LOAD program's arguments
+        for i, d in enumerate(params):
+            if i > self.REGS_END:
+                break
+            self.mem[self.REGS_START + i] = int(d)
+
+        # if everything loaded properly, we can set PC to the entrypoint:
+        self.pc = base_text
+
 
     #
     # Implementation
@@ -190,6 +214,10 @@ if __name__ == '__main__':
             help='List of registers to dump when -v is present\n'
             'exemple: 13,14,15'
     )
+    parser.add_argument(
+            'prog_args', metavar='ARG', nargs='*',
+            help='Arguments that will be passed to the program'
+    )
     args = parser.parse_args()
 
     dmp_fmt = None
@@ -206,7 +234,7 @@ if __name__ == '__main__':
     if args.file is not None:
         prog = vm.prog_parse_from_file(args.file)
         try:
-            vm.load(prog)
+            vm.load(prog, args.prog_args)
         except AssertionError as e:
             print(e)
             exit()

@@ -11,15 +11,37 @@ from time import sleep
 
 class VM:
 
-    INST_SZ = 128
+    INST_SZ     = 128
 
-    SYS_SZ  = 0x30
+    SYS_SZ      = 0x30
     REGS_START  = 0x10
     REGS_END    = 0x1f
 
-    MEM_GAP = 0x10
+    MEM_GAP     = 0x10
 
     DISPLAY_SPACING = 10
+
+    REGS = {
+        'r0': 0x10,
+        'r1': 0x11,
+        'r2': 0x12,
+        'r3': 0x13,
+        'r4': 0x14,
+        'r5': 0x15,
+        'r6': 0x16,
+        'r7': 0x17,
+        'r8': 0x18,
+        'r9': 0x19,
+        'ra': 0x1a,
+        'rb': 0x1b,
+        'rc': 0x1c,
+        'rd': 0x1d,
+        're': 0x1e,
+        'rf': 0x1f,
+
+        'WR': 0x20,
+        'RD': 0x21,
+    }
 
     def __init__(self, size, speed=None, verbose=False, dmp_fmt=None):
         self.size = size
@@ -36,12 +58,29 @@ class VM:
     #
     # Debugging utilities
     #
+    @staticmethod
+    def parse_dump_fmt(s):
+        r = s
+        if s is None or s == 'all':
+            return r
+        r = []
+        for x in s.split(','):
+            try:
+                r.append(int(x))
+            except ValueError:
+                try:
+                    r.append(VM.REGS[x])
+                except KeyError as e:
+                    print('%r' % e)
+        return r
 
     def fmt(self, r):
         i, r = r
         a, b, c = self.decode()
 
-        if self.dmp_fmt is not None and i not in self.dmp_fmt:
+        if self.dmp_fmt is not None and (
+                self.dmp_fmt != 'all' and i not in self.dmp_fmt
+            ):
             return ''
 
         label_color_for_i = {
@@ -72,7 +111,9 @@ class VM:
             print("".join("%-*d" % (
                 self.DISPLAY_SPACING, i
             ) for i in range(self.size) if (
-                    self.dmp_fmt is not None and i in self.dmp_fmt
+                    self.dmp_fmt is not None and (
+                        self.dmp_fmt == 'all' or i in self.dmp_fmt
+                    )
                 )
             ))
 
@@ -128,9 +169,7 @@ class VM:
             self.INST_SZ = prog['inst_sz']
 
         # LOAD program's arguments
-        for i, d in enumerate(params):
-            if i > self.REGS_END:
-                break
+        for i, d in enumerate(params[:0xf]):
             self.mem[self.REGS_START + i] = int(d)
 
         # if everything loaded properly, we can set PC to the entrypoint:
@@ -185,14 +224,6 @@ class VM:
             self.tick()
 
 
-def parse_dump_fmt(s):
-    if s is None:
-        return None
-    for x in s:
-        assert x in '0123456789,', "Bad format string."
-    return [int(x) for x in s.split(',')]
-
-
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
@@ -214,8 +245,9 @@ if __name__ == '__main__':
             const=True, help='Enable verbose messages')
     parser.add_argument(
             '--dump-fmt', '-d', type=str, default=None,
-            help='List of registers to dump when -v is present\n'
-            'exemple: 13,14,15'
+            help='List of memory or registers addrs to dump when -v is present.'
+            'For exemple: r0,48,0x11 '
+            'Will output r0, values of memory addr 48 (==entry point) and 0x11 (==r1)'
     )
     parser.add_argument(
             'prog_args', metavar='ARG', nargs='*',
@@ -225,7 +257,7 @@ if __name__ == '__main__':
 
     dmp_fmt = None
     try:
-        dmp_fmt = parse_dump_fmt(args.dump_fmt)
+        dmp_fmt = VM.parse_dump_fmt(args.dump_fmt)
     except AssertionError as e:
         print(e)
         exit()

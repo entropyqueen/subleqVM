@@ -22,27 +22,27 @@ class VM:
     DISPLAY_SPACING = 10
 
     REGS = {
-        'r0': 0x10,
-        'r1': 0x11,
-        'r2': 0x12,
-        'r3': 0x13,
-        'r4': 0x14,
-        'r5': 0x15,
-        'r6': 0x16,
-        'r7': 0x17,
-        'r8': 0x18,
-        'r9': 0x19,
-        'ra': 0x1a,
-        'rb': 0x1b,
-        'rc': 0x1c,
-        'rd': 0x1d,
-        're': 0x1e,
-        'rf': 0x1f,
+        'R0': 0x10,
+        'R1': 0x11,
+        'R2': 0x12,
+        'R3': 0x13,
+        'R4': 0x14,
+        'R5': 0x15,
+        'R6': 0x16,
+        'R7': 0x17,
+        'R8': 0x18,
+        'R9': 0x19,
+        'RA': 0x1a,
+        'RB': 0x1b,
+        'RC': 0x1c,
+        'RD': 0x1d,
+        'RE': 0x1e,
+        'RF': 0x1f,
 
-        'WR': 0x20,
-        'RD': 0x21,
-        'RND': 0x22,
-        'RTC': 0x23,
+        'SYS_WR': 0x20,
+        'SYS_RD': 0x21,
+        'SYS_RND': 0x22,
+        'SYS_RTC': 0x23,
     }
 
     def __init__(self, size, speed=None, verbose=False, dmp_fmt=None):
@@ -55,18 +55,21 @@ class VM:
         # display
         self.debug = False
         self.verbose = verbose
-        self.dmp_fmt = dmp_fmt
+        self.dump_pc = False
+        self.dmp_fmt = self.parse_dump_fmt(dmp_fmt)
 
     #
     # Debugging utilities
     #
-    @staticmethod
-    def parse_dump_fmt(s):
+    def parse_dump_fmt(self, s):
         r = s
         if s is None or s == 'all':
             return r
         r = []
         for x in s.split(','):
+            if x == 'PC':
+                self.dump_pc = True
+                continue
             try:
                 r.append(int(x))
             except ValueError:
@@ -81,7 +84,9 @@ class VM:
         a, b, c = self.decode()
 
         if self.dmp_fmt is not None and (
-                self.dmp_fmt != 'all' and i not in self.dmp_fmt
+                self.dmp_fmt != 'all' and (
+                    i not in self.dmp_fmt and i != self.pc
+                )
             ):
             return ''
 
@@ -206,8 +211,8 @@ class VM:
 
     def tick(self):
 
-        self.mem[self.REGS['RND']] = random.random()
-        self.mem[self.REGS['RTC']] = time()
+        self.mem[self.REGS['SYS_RND']] = random.random()
+        self.mem[self.REGS['SYS_RTC']] = time()
 
         self.subleq()
 
@@ -261,15 +266,8 @@ if __name__ == '__main__':
     )
     args = parser.parse_args()
 
-    dmp_fmt = None
-    try:
-        dmp_fmt = VM.parse_dump_fmt(args.dump_fmt)
-    except AssertionError as e:
-        print(e)
-        exit()
-
     vm = VM(args.memsz, speed=args.speed,
-            verbose=args.verbose, dmp_fmt=dmp_fmt)
+            verbose=args.verbose, dmp_fmt=args.dump_fmt)
 
     # Load a program (either from file or random)
     if args.file is not None:

@@ -6,7 +6,7 @@ import argparse
 import pickle
 
 from termcolor import colored
-from time import sleep
+from time import sleep, time
 
 
 class VM:
@@ -41,6 +41,8 @@ class VM:
 
         'WR': 0x20,
         'RD': 0x21,
+        'RND': 0x22,
+        'RTC': 0x23,
     }
 
     def __init__(self, size, speed=None, verbose=False, dmp_fmt=None):
@@ -214,6 +216,9 @@ class VM:
 
         if self.pc == 0 and self.mem[0] == 0:
             self.is_halted = True
+
+        self.mem[self.REGS['RND']] = random.random()
+        self.mem[self.REGS['RTC']] = time()
 
         if self.speed:
             sleep(self.speed)

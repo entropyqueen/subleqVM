@@ -11,13 +11,13 @@ from time import sleep, time
 
 class VM:
 
-    INST_SZ     = 128
+    INST_SZ = 128
 
-    SYS_SZ      = 0x30
-    REGS_START  = 0x10
-    REGS_END    = 0x1f
+    SYS_SZ = 0x30
+    REGS_START = 0x10
+    REGS_END = 0x1f
 
-    MEM_GAP     = 0x10
+    MEM_GAP = 0x10
 
     DISPLAY_SPACING = 10
 
@@ -87,7 +87,7 @@ class VM:
                 self.dmp_fmt != 'all' and (
                     i not in self.dmp_fmt and i != self.pc
                 )
-            ):
+        ):
             return ''
 
         label_color_for_i = {
@@ -107,7 +107,6 @@ class VM:
         text = text.ljust(self.DISPLAY_SPACING)
 
         return colored(text, color)
-
 
     def dump(self):
         if self.verbose:
@@ -144,7 +143,7 @@ class VM:
 
         prog_size = self.SYS_SZ + len(prog['.text'])
         if '.data' in prog.keys():
-                   prog_size += len(prog['.data'])
+            prog_size += len(prog['.data'])
         if 'stack' in prog.keys():
             prog_size += prog['stack']
 
@@ -181,7 +180,6 @@ class VM:
 
         # if everything loaded properly, we can set PC to the entrypoint:
         self.pc = base_text
-
 
     #
     # Implementation
@@ -256,9 +254,10 @@ if __name__ == '__main__':
             const=True, help='Enable verbose messages')
     parser.add_argument(
             '--dump-fmt', '-d', type=str, default=None,
-            help='List of memory or registers addrs to dump when -v is present.'
-            'For exemple: r0,48,0x11 '
-            'Will output r0, values of memory addr 48 (==entry point) and 0x11 (==r1)'
+            help='List of memory or register addrs to dump when -v is present.'
+            'For exemple: R0,48,0x11,SYS_RTC '
+            'Will output R0, values of memory addr 48 '
+            '(==entry point), 0x11 (==r1) and SYS_RTC value'
     )
     parser.add_argument(
             'prog_args', metavar='ARG', nargs='*',

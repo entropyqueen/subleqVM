@@ -25,8 +25,8 @@ if __name__ == '__main__':
     prog = {}
 
     BASE_OFFSET = 0x30      # entrypoint cf bin_file_notes.txt
-    SIZE_TEXT   = 6         # Nb of instructions in .text
-    SIZE_GAP    = 0x10      # this could also be 0
+    SIZE_TEXT = 6         # Nb of instructions in .text
+    SIZE_GAP = 0x10      # this could also be 0
 
     data = BASE_OFFSET + SIZE_TEXT + SIZE_GAP
     data_one = data
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         pack(0x14, 0x11, 0x33),        # r4 -= r1
 
         pack(0x1f, 0x14, 0x34),        # rf -= r4 == rf += r1
-        pack(0x13, data_one, 0x00),    # r3 -= data['one'] ; if r3 - 1 == 0 : jmp 0 // == halt
+        pack(0x13, data_one, 0x00),    # r3 -= data['one'] ; jmp 0 if r3<0
         pack(0, 0, 0x33),              # jmp @3
     ]
 

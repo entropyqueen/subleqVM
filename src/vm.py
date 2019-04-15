@@ -205,6 +205,10 @@ class VM:
             print(dict(aa=aa, bb=bb, sub=aa-bb, nxt=self.pc))
 
     def tick(self):
+
+        self.mem[self.REGS['RND']] = random.random()
+        self.mem[self.REGS['RTC']] = time()
+
         self.subleq()
 
         # Syscall write
@@ -216,9 +220,6 @@ class VM:
 
         if self.pc == 0 and self.mem[0] == 0:
             self.is_halted = True
-
-        self.mem[self.REGS['RND']] = random.random()
-        self.mem[self.REGS['RTC']] = time()
 
         if self.speed:
             sleep(self.speed)

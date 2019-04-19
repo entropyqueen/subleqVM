@@ -221,7 +221,7 @@ class VM:
             for i, b in enumerate(data_in):
                 if i >= self.mem[self.REGS['SYS_RDL']]:
                     break
-                self.mem[base + i] = b
+                self.mem[base + i] = ord(b)
 
     def sys_rand(self):
         self.mem[self.REGS['SYS_RND']] = random.random()

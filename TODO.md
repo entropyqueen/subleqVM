@@ -2,16 +2,9 @@
 
 ## Features
 
-0. LOADER:
-	* load properly, following spec in bin_file_notes.txt
-	* Allow to pass parameters to the program in its registers (r0 to re)
-
-1. Add some syscalls -> write / read
-	* add a register which will be populated with stdin ?
+1. Add some syscall read
+	* somehow populates SYS_RD with stdin
 	* we can also have control registers for thoses? ==> allowing for blocking reads and controled output
-
-2. syscall rand()
-	* provide a random input each tick
 
 3. ASM
 	* create a grammar for asm files so that it becomes less of a pain to write
@@ -24,13 +17,7 @@
 
 ## Enhancement
 
-1. improve bytecode format
+1. Implement PIE in the loader
 
-2. Implement aslr in the loader
-
-3. refactor the loader to another class
-
-4. Change dmp_fmt to take register names instead of memmory @s
-	* this also implies to refactor the VM to use those registers instead of the memory
-	* Shall we have register separated from the memory ? --> safer but harder to implem
+2. refactor the loader to another class
 

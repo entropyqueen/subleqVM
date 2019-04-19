@@ -212,16 +212,19 @@ class VM:
         # Syscall read
         # if SYS_RDC > 0 ; copy SYS_RDL bytes from STDIN to addr in SYS_RDA
         if self.mem[self.REGS['SYS_RDC']] > 0:
-            data_in = input()[:self.mem[self.REGS['SYS_RDL']]]
+            try:
+                data_in = input()[:self.mem[self.REGS['SYS_RDL']]]
+            except EOFError:
+                self.mem[self.REGS['SYS_RDL']] = 0
+                return
             base = self.mem[self.REGS['SYS_RDA']]
 
             assert base + len(data_in) < self.size, (
                 "Segmentation fault, u broke da memory"
             )
             for i, b in enumerate(data_in):
-                if i >= self.mem[self.REGS['SYS_RDL']]:
-                    break
                 self.mem[base + i] = ord(b)
+            self.mem[self.REGS['SYS_RDL']] = len(data_in)
 
     def sys_rand(self):
         self.mem[self.REGS['SYS_RND']] = random.random()

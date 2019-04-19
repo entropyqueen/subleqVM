@@ -33,26 +33,31 @@ optional arguments:
 
 Test run wiht mul.bin:
 ```
-$ python vm.py -m 128 -v -d 16,17,31,70 asm/bin/mul.bin 4 5
-16        17        31        70        
-B: 4      5         0         1         
-4         5         0         1         
-4         B: 5      0         1         
-4         5         A: 0      1         
-4         5         5         B: 1      
-4         5         5         1         
-4         5         A: 5      1         
-4         5         10        B: 1      
-4         5         10        1         
-4         5         A: 10     1         
-4         5         15        B: 1      
-4         5         15        1         
-4         5         A: 15     1         
-4         5         20        B: 1      
+python vm.py -m 128 -v -d R0,R1,RF,PC asm/bin/mul.bin 3 5
+0x10      0x11      0x1f
+3 [B]     5         0          [PC]: 0x30:[0x12,0x10,0x33]
+3         5         0          [PC]: 0x33:[0x13,0x12,0x36]
+3         5 [B]     0          [PC]: 0x36:[0x14,0x11,0x39]
+3         5         0 [A]      [PC]: 0x39:[0x1f,0x14,0x34]
+3         5         5          [PC]: 0x3c:[0x13,0x52,0x0]
+3         5         5          [PC]: 0x3f:[0x0,0x0,0x39]
+3         5         5 [A]      [PC]: 0x39:[0x1f,0x14,0x34]
+3         5         10         [PC]: 0x3c:[0x13,0x52,0x0]
+3         5         10         [PC]: 0x3f:[0x0,0x0,0x39]
+3         5         10 [A]     [PC]: 0x39:[0x1f,0x14,0x34]
+3         5         15         [PC]: 0x3c:[0x13,0x52,0x0]
 Halted.
 ```
+
 The program takes input from r0 (addr 16) and r1 (addr 17) and multiply them, then store the result in rf (addr 31).
 It also uses a static data from the `.data` section (addr 70), containing the value `1`.
+
+Test run with Hello World:
+```
+$ python vm.py -m 128 asm/bin/hello_world.bin 
+Hello World!
+Halted.
+```
 
 #### syscall
 1. Write (SYS_WR)

@@ -60,7 +60,7 @@ if __name__ == '__main__':
         SYS_WR, SYS_WR, 0x48,   # SYS_WR = 0
         R1, R1, 0x4b,
         R0, data_one, 0x4e,     # R0 -= 1
-        data_len, data_one, 0x0,# LEN -= 1
+        data_len, data_one, 0x0,  # LEN -= 1
         0x0, 0x0, 0x39,
 
         0x0, 0x0, 0x0

@@ -11,8 +11,6 @@ from time import sleep, time
 
 class VM:
 
-    INST_SZ = 128
-
     SYS_SZ = 0x30
     REGS_START = 0x10
     REGS_END = 0x1f
@@ -62,60 +60,57 @@ class VM:
     # Debugging utilities
     #
     def parse_dump_fmt(self, s):
-        r = s
-        if s is None or s == 'all':
-            return r
+        if s is None:
+            return range(len(self.mem))
         r = []
         for x in s.split(','):
             if x == 'PC':
                 self.dump_pc = True
                 continue
             try:
-                r.append(int(x))
+                r.append(int(x, 0))
             except ValueError:
                 try:
                     r.append(VM.REGS[x])
                 except KeyError as e:
                     print('%r' % e)
-        return r
-
-    def fmt(self, r):
-        i, r = r
-        a, b, c = self.decode()
-
-        if self.dmp_fmt is not None and (
-                self.dmp_fmt != 'all' and (
-                    i not in self.dmp_fmt and i != self.pc
-                )
-        ):
-            return ''
-
-        label_color_for_i = {
-            self.pc: ('PC', 'green'),
-            a: ('A', 'red'),
-            b: ('B', 'yellow'),
-            c: ('C', 'cyan'),
-        }
-
-        try:
-            label, color = label_color_for_i[i]
-        except KeyError:
-            text = "%d" % self.mem[i]
-            return text.ljust(self.DISPLAY_SPACING)
-
-        text = "%d [%s]" % (self.mem[i], label)
-        text = text.ljust(self.DISPLAY_SPACING)
-
-        return colored(text, color)
+        return list(sorted(r))
 
     def dump(self):
+        a, b, c = self.decode()
+        text = ''
         if self.verbose:
-            print("".join(map(self.fmt, enumerate(self.mem))))
+            for i in self.dmp_fmt:
+                label_color_for_i = {
+                    a: ('A', 'red'),
+                    b: ('B', 'yellow'),
+                    c: ('C', 'cyan'),
+                }
+
+                try:
+                    label, color = label_color_for_i[i]
+                except KeyError:
+                    tmp = "%d" % self.mem[i]
+                    tmp = tmp.ljust(self.DISPLAY_SPACING)
+                else:
+                    tmp = "%d [%s]" % (self.mem[i], label)
+                    tmp = tmp.ljust(self.DISPLAY_SPACING)
+                    tmp = colored(tmp, color)
+                text += tmp
+
+            if self.dump_pc:
+                pc_text = colored('[PC]: %s:[%s]' % (
+                    hex(self.pc), ','.join(map(hex, (a, b, c)))), 'green'
+                )
+            else:
+                pc_text = ''
+
+            print('%s %s' % (text, pc_text))
 
     def dump_init(self):
         if self.verbose:
-            print("".join("%-*d" % (
-                self.DISPLAY_SPACING, i
+            print("".join("%-*s" % (
+                self.DISPLAY_SPACING, hex(i)
             ) for i in range(self.size) if (
                     self.dmp_fmt is not None and (
                         self.dmp_fmt == 'all' or i in self.dmp_fmt
@@ -143,9 +138,9 @@ class VM:
 
         prog_size = self.SYS_SZ + len(prog['.text'])
         if '.data' in prog.keys():
-            prog_size += len(prog['.data'])
+            prog_size += len(prog['.data']) + self.MEM_GAP
         if 'stack' in prog.keys():
-            prog_size += prog['stack']
+            prog_size += prog['stack'] + self.MEM_GAP
 
         assert prog_size <= self.size, (
                 "Not enough memory to load this program "
@@ -167,13 +162,6 @@ class VM:
 
         # mem starts @ base_data + len(prog['.data']) + MEM_GAP
 
-        # if inst_size in program header, use it:
-        if 'inst_sz' in prog.keys():
-            assert isinstance(prog['inst_sz'], int), (
-                    "Invalid INST_SZ in program header."
-            )
-            self.INST_SZ = prog['inst_sz']
-
         # LOAD program's arguments
         for i, d in enumerate(params[:0xf]):
             self.mem[self.REGS_START + i] = int(d)
@@ -186,13 +174,14 @@ class VM:
     #
 
     def decode(self):
-        b, c = divmod(self.mem[self.pc], self.INST_SZ)
-        a, b = divmod(b, self.INST_SZ)
-        if self.debug:
-            print('Decoding instruction: %r' % dict(a=a, b=b, c=c))
+        a = self.mem[(self.pc) % self.size]
+        b = self.mem[(self.pc + 1) % self.size]
+        c = self.mem[(self.pc + 2) % self.size]
+
         return a, b, c
 
     def subleq(self):
+
         a, b, c = self.decode()
         assert -self.size < a < self.size and -self.size < b < self.size, (
             "Segmentation fault."
@@ -202,7 +191,7 @@ class VM:
         bb = self.mem[b]
 
         self.mem[a] = aa - bb
-        self.pc = (c if self.mem[a] <= 0 else self.pc + 1) % self.size
+        self.pc = (c if self.mem[a] <= 0 else self.pc + 3) % self.size
 
         if self.debug:
             print(dict(aa=aa, bb=bb, sub=aa-bb, nxt=self.pc))
@@ -215,13 +204,13 @@ class VM:
         self.subleq()
 
         # Syscall write
-        # Display the last memory word as ascii value ( % 127)
-        # if value > 0
-        if self.mem[-1] > 0:
-            print('%s' % chr(self.mem[-1] % 127), end='')
+        # Display what is stored at SYS_WR if > 0
+        if self.mem[self.REGS['SYS_WR']] > 0:
+            print('%s' % chr(self.mem[self.REGS['SYS_WR']] % 127), end='')
             sys.stdout.flush()
 
-        if self.pc == 0 and self.mem[0] == 0:
+        # HALT if PC == 0
+        if self.pc == 0:
             self.is_halted = True
 
         if self.speed:

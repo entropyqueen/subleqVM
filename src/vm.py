@@ -38,9 +38,14 @@ class VM:
         'RF': 0x1f,
 
         'SYS_WR': 0x20,
-        'SYS_RD': 0x21,
-        'SYS_RND': 0x22,
-        'SYS_RTC': 0x23,
+
+        'SYS_RDA': 0x21,
+        'SYS_RDL': 0x22,
+        'SYS_RDC': 0x23,
+
+        'SYS_RND': 0x24,
+
+        'SYS_RTC': 0x25,
     }
 
     def __init__(self, size, speed=None, verbose=False, dmp_fmt=None):
@@ -209,6 +214,18 @@ class VM:
             print('%s' % chr(self.mem[self.REGS['SYS_WR']] % 127), end='')
             sys.stdout.flush()
 
+        # Syscall read
+        # if SYS_RDC > 0 ; copy SYS_RDL bytes from STDIN to addr in SYS_RDA
+        if self.mem[self.REGS['SYS_RDC']] > 0:
+            data_in = input()[:self.mem[self.REGS['SYS_RDL']]]
+            base = self.mem[self.REGS['SYS_RDA']]
+
+            assert base + len(data_in) < self.size, (
+                "Segmentation fault, u broke da memory"
+            )
+            for i, b in enumerate(data_in):
+                self.mem[base + i] = b
+
         # HALT if PC == 0
         if self.pc == 0:
             self.is_halted = True
@@ -259,10 +276,10 @@ if __name__ == '__main__':
 
     # Load a program (either from file or random)
     if args.file is not None:
-        prog = vm.prog_parse_from_file(args.file)
         try:
+            prog = vm.prog_parse_from_file(args.file)
             vm.load(prog, args.prog_args)
-        except AssertionError as e:
+        except (AssertionError, FileNotFoundError) as e:
             print(e)
             exit()
     else:

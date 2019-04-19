@@ -19,7 +19,7 @@ Program file:
 Program file contains a pickle() object of the above json.
 
 User controled:
-	.text: list of opcodes ; each opcode represents the 3 operands of the subleq instruction, packed.
+	.text: list of opcodes ; each opcode represents the 3 operands of the subleq instruction, encoded on 3 words each.
 	.data: bytearray ; data to be loaded in memory
 	mem: int ; minimal memory required by the program
 
@@ -47,10 +47,15 @@ assert prog_size <= mem_size, "Memory Error: not enough memory"
 	[0x01, 0x0f]: unused
 	[0x10, 0x1f]: General registers, noted from r0 to rf.
 	[0x20, 0x2f]: SYScall utilites
-				  - 0x21: WR: if the value written in this word is > 0, it will be printed at next tick on stdout.
-				  - 0x22: RD: this will be used for allowing reading from stdin, NOT IMPLEM YET
-				  - 0x23: RND: provides a different value, randomized at each tick, NOT IMPLEM YET
-				  - 0x24 to 0x2f: unused.
+				  - 0x20: WR: if the value written in this word is > 0, it will be printed at next tick on stdout.
+
+				  - 0x21: SYS_RDA: address for read
+				  - 0x22: SYS_RDL: length to read ; length read.
+				  - 0x23: SYS_RDC: Control Register for READ Syscall: if > 0, will read from stdin and copy SYS_RDL bytes at @SYS_RDA
+				  				When something have been read, its length is returned into SYS_RDL
+
+				  - 0x24: SYS_RND: provides a random value at each tick.
+				  - 0x25: unused.
 
 Prog:
 	[0x30, SIZE]:

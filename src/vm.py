@@ -201,19 +201,14 @@ class VM:
         if self.debug:
             print(dict(aa=aa, bb=bb, sub=aa-bb, nxt=self.pc))
 
-    def tick(self):
-
-        self.mem[self.REGS['SYS_RND']] = random.random()
-        self.mem[self.REGS['SYS_RTC']] = time()
-
-        self.subleq()
-
+    def sys_write(self):
         # Syscall write
         # Display what is stored at SYS_WR if > 0
         if self.mem[self.REGS['SYS_WR']] > 0:
             print('%s' % chr(self.mem[self.REGS['SYS_WR']] % 127), end='')
             sys.stdout.flush()
 
+    def sys_read(self):
         # Syscall read
         # if SYS_RDC > 0 ; copy SYS_RDL bytes from STDIN to addr in SYS_RDA
         if self.mem[self.REGS['SYS_RDC']] > 0:
@@ -224,7 +219,27 @@ class VM:
                 "Segmentation fault, u broke da memory"
             )
             for i, b in enumerate(data_in):
+                if i >= self.mem[self.REGS['SYS_RDL']]:
+                    break
                 self.mem[base + i] = b
+
+    def sys_rand(self):
+        self.mem[self.REGS['SYS_RND']] = random.random()
+
+    def sys_rtc(self):
+        self.mem[self.REGS['SYS_RTC']] = time()
+
+    def do_syscalls(self):
+        self.sys_rand()
+        self.sys_rtc()
+        self.sys_write()
+        self.sys_read()
+
+    def tick(self):
+
+        self.subleq()
+
+        self.do_syscalls()
 
         # HALT if PC == 0
         if self.pc == 0:

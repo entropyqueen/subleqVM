@@ -31,9 +31,9 @@ optional arguments:
                         13,14,15
 ```
 
-Test run wiht prog.bin:
+Test run wiht mul.bin:
 ```
-$ python vm.py -m 128 -v -d 16,17,31,70 asm/bin/prog.bin 4 5
+$ python vm.py -m 128 -v -d 16,17,31,70 asm/bin/mul.bin 4 5
 16        17        31        70        
 B: 4      5         0         1         
 4         5         0         1         
@@ -55,10 +55,14 @@ The program takes input from r0 (addr 16) and r1 (addr 17) and multiply them, th
 It also uses a static data from the `.data` section (addr 70), containing the value `1`.
 
 #### syscall
-1. Write
-  * The VM will print the last memory word if it is > 0.
-2. read
+1. Write (SYS_WR)
+  * The VM will print the content of the memory at addr SYS_WR if > 0
+2. Read (SYS_RD)
   * still not implemented
+3. Rand (SYS_RND)
+  * populates SYS_RND with a random value at each tick
+4. Real Time Clock (SYS_RTC)
+  * Populates SYS_RTC with a time.time() at each tick
 
 ### ASM
 
@@ -72,5 +76,4 @@ see the file [TODO.md](TODO.md)
 
 ## Contributions
 
-For any contribution, please create a new branch then pull request
-
+Do not hesitate to pull request if you have fun ideas
